@@ -1,0 +1,122 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: JAR bauen
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 25
+        id: java
+        continue-on-error: true
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Gradle
+        id: gradlesetup
+        continue-on-error: true
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: gradlew ausfuehrbar machen
+        continue-on-error: true
+        run: chmod +x ./gradlew
+
+      # Der eigentliche Build. continue-on-error, damit der Lauf nicht hier
+      # abbricht - erst wird die Meldung eingesammelt und angezeigt, dann
+      # faellt der Job ganz am Ende durch.
+      - name: Bauen
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./gradlew build --no-daemon --stacktrace 2>&1 | tee gradle-output.txt
+
+      # ------------------------------------------------------------------
+      # Schreibt das Ergebnis auf die STARTSEITE des Laufs.
+      # Kein Durchklicken durch Schritte noetig - beim Oeffnen des Laufs
+      # steht die Fehlermeldung direkt da.
+      # ------------------------------------------------------------------
+      - name: Ergebnis anzeigen
+        if: always()
+        run: |
+          S="$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ steps.build.outcome }}" = "success" ]; then
+            echo "# JAR fertig gebaut" >> "$S"
+            echo "" >> "$S"
+            echo "Herunterladen: auf dieser Seite ganz nach unten scrollen, Abschnitt **Artifacts**." >> "$S"
+            echo "" >> "$S"
+            echo "| Datei | Groesse |" >> "$S"
+            echo "|---|---|" >> "$S"
+            for f in build/libs/*.jar; do
+              [ -f "$f" ] || continue
+              echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) |" >> "$S"
+            done
+            exit 0
+          fi
+
+          echo "# Build fehlgeschlagen" >> "$S"
+          echo "" >> "$S"
+
+          if [ "${{ steps.java.outcome }}" != "success" ]; then
+            echo "**Java 25 liess sich nicht einrichten.**" >> "$S"
+          fi
+          if [ "${{ steps.gradlesetup.outcome }}" != "success" ]; then
+            echo "**Gradle liess sich nicht einrichten.**" >> "$S"
+          fi
+
+          if [ ! -f gradle-output.txt ]; then
+            echo "Gradle wurde gar nicht erst gestartet - siehe die Schritte oben." >> "$S"
+            exit 1
+          fi
+
+          echo "## Das ist schiefgelaufen" >> "$S"
+          echo "" >> "$S"
+          echo '```' >> "$S"
+          # Gradles eigener Fehlerblock: alles ab "What went wrong"
+          if grep -q "What went wrong" gradle-output.txt; then
+            sed -n '/What went wrong/,/Try:/p' gradle-output.txt | head -40 >> "$S"
+          fi
+          # Compilerfehler mit Datei und Zeile
+          grep -E "^(e: |.*\.java:[0-9]+: error:)" gradle-output.txt | head -25 >> "$S"
+          echo '```' >> "$S"
+
+          echo "" >> "$S"
+          echo "## Letzte 40 Zeilen" >> "$S"
+          echo '```' >> "$S"
+          tail -n 40 gradle-output.txt >> "$S"
+          echo '```' >> "$S"
+
+          echo "" >> "$S"
+          echo "Das komplette Log liegt unten unter **Artifacts** als \`build-log\`." >> "$S"
+          exit 1
+
+      - name: JAR hochladen
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DonutMarket-JAR
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+          if-no-files-found: error
+
+      - name: Log hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: gradle-output.txt
+          if-no-files-found: ignore

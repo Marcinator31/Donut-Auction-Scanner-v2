@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    # Major-Spruenge bei Actions erzeugen sonst sofort einen Schwung PRs, die
+    # alle am selben Grundproblem scheitern. Erst wenn main gruen ist, lohnt
+    # sich das. Zum Aktivieren die naechsten zwei Zeilen entfernen.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: monthly

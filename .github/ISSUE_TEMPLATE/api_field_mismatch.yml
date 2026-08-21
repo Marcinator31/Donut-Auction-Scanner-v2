@@ -1,0 +1,24 @@
+name: API-Feld stimmt nicht
+description: Preise oder Zeitstempel werden nicht gelesen
+labels: [api]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Führe zuerst `/dm raw transactions 1` bzw. `/dm raw auction 1` aus und
+        kopiere die Antwort aus `latest.log` hier rein.
+        **Den API-Key vorher entfernen.**
+  - type: dropdown
+    id: endpoint
+    attributes:
+      label: Endpunkt
+      options: [auction/list, auction/transactions]
+    validations:
+      required: true
+  - type: textarea
+    id: json
+    attributes:
+      label: Rohe Antwort
+      render: json
+    validations:
+      required: true

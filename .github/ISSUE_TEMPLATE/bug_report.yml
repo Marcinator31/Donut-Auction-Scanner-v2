@@ -1,0 +1,31 @@
+name: Bug melden
+description: Etwas funktioniert nicht wie erwartet
+labels: [bug]
+body:
+  - type: input
+    id: mcversion
+    attributes:
+      label: Minecraft-Version
+      placeholder: "26.2"
+    validations:
+      required: true
+  - type: input
+    id: loader
+    attributes:
+      label: Fabric Loader / Fabric API
+      placeholder: "0.19.3 / 0.158.0+26.2"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Was passiert?
+      description: Was hast du erwartet, was passiert stattdessen?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Relevanter Ausschnitt aus latest.log. API-Key vorher entfernen!
+      render: text

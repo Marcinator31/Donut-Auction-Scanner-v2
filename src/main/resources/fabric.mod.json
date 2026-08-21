@@ -1,0 +1,22 @@
+{
+	"schemaVersion": 1,
+	"id": "donutmarket",
+	"version": "${version}",
+	"name": "DonutMarket",
+	"description": "Preis-Alarme und 24h-Preisgraphen fuer das DonutSMP-Auktionshaus. Nutzt ausschliesslich die offizielle DonutSMP-Public-API (read-only).",
+	"authors": [],
+	"contact": {},
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"net.donutmarket.DonutMarketClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
